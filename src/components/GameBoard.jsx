@@ -7,19 +7,21 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
   const [clicked, setClicked] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-  const [shinyMode, setShinyMode] = useState(true); // ✅ added
+  const [shinyMode, setShinyMode] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ fetchPokemon is now inside the component
+  // Fetch random Gen 1 Pokémon
   async function fetchPokemon(limit = 12) {
-    const maxGen1 = 151; // Gen 1 Pokémon only
+    const maxGen1 = 151;
+    setLoading(true);
 
-    // Generate unique random IDs between 1 and 151
+    // Generate unique random IDs
     const ids = new Set();
     while (ids.size < limit) {
       ids.add(Math.floor(Math.random() * maxGen1) + 1);
     }
 
-    // Fetch each Pokémon by ID
+    // Fetch Pokémon data
     const detailed = await Promise.all(
       [...ids].map(async (id) => {
         const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
@@ -27,15 +29,36 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
       })
     );
 
+    // ✅ Preload all images (normal + shiny if available)
+    await Promise.all(
+      detailed.flatMap((p) => {
+        const urls = [p.sprites.front_default, p.sprites.front_shiny].filter(
+          Boolean
+        );
+        return urls.map(
+          (url) =>
+            new Promise((resolve) => {
+              const img = new Image();
+              img.src = url;
+              img.onload = resolve;
+              img.onerror = resolve; // still resolve if it fails
+            })
+        );
+      })
+    );
+
+    // Once data + images are ready, update state
     setPokemon(detailed);
     setClicked([]);
     setGameOver(false);
     setGameWon(false);
     setScore(0);
+    setLoading(false);
   }
 
+  // Initial fetch
   useEffect(() => {
-    fetchPokemon(12); // default difficulty
+    fetchPokemon(12);
   }, []);
 
   function handleClick(id) {
@@ -64,33 +87,37 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
         </button>
       </div>
 
-      {/* Game Grid */}
-      <div className="grid">
-        {pokemon.map((p) => (
-          <Card
-            key={p.id}
-            id={p.id}
-            name={p.name}
-            sprite={p.sprites.front_default}
-            shinySprite={p.sprites.front_shiny}
-            shinyMode={shinyMode}
-            onClick={handleClick}
-          />
-        ))}
+      {/* Loading indicator */}
+      {loading ? (
+        <div className="loading">Loading Pokémon… ✨</div>
+      ) : (
+        <div className="grid">
+          {pokemon.map((p) => (
+            <Card
+              key={p.id}
+              id={p.id}
+              name={p.name}
+              sprite={p.sprites.front_default}
+              shinySprite={p.sprites.front_shiny}
+              shinyMode={shinyMode}
+              onClick={handleClick}
+            />
+          ))}
 
-        {gameOver && (
-          <Overlay
-            message="Game Over!"
-            onRestart={() => fetchPokemon(pokemon.length)}
-          />
-        )}
-        {gameWon && (
-          <Overlay
-            message="You Win!"
-            onRestart={() => fetchPokemon(pokemon.length)}
-          />
-        )}
-      </div>
+          {gameOver && (
+            <Overlay
+              message="Game Over!"
+              onRestart={() => fetchPokemon(pokemon.length)}
+            />
+          )}
+          {gameWon && (
+            <Overlay
+              message="You Win!"
+              onRestart={() => fetchPokemon(pokemon.length)}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -116,3 +116,24 @@ h1 {
 .difficulty-buttons button:hover {
   transform: scale(1.05);
 }
+
+.loading {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffcb05;
+  text-align: center;
+  margin-top: 2rem;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
