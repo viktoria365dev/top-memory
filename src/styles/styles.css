@@ -37,15 +37,30 @@ h1 {
 }
 
 .card {
-  background: #f8f8f8;
+  background: white;
+  border: 2px solid #2a75bb;
   border-radius: 8px;
-  padding: 10px;
+  padding: 0.5rem;
+  text-align: center;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
   transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card img {
+  max-width: 100px;
+  height: auto;
+  display: block;
+  margin: 0 auto 0.5rem;
+}
+
+.card p {
+  text-transform: capitalize;
+  font-weight: bold;
 }
 
 .overlay {

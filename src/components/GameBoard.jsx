@@ -7,8 +7,8 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
   const [clicked, setClicked] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [shinyMode, setShinyMode] = useState(true); // ✅ add this
 
-  // Fetch Pokémon with a variable limit (default 12)
   async function fetchPokemon(limit = 12) {
     const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}`);
     const data = await res.json();
@@ -27,14 +27,12 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
     setScore(0);
   }
 
-  // Initial fetch on mount
   useEffect(() => {
-    fetchPokemon(12); // default difficulty
+    fetchPokemon(12);
   }, []);
 
   function handleClick(id) {
     if (clicked.includes(id)) {
-      // Game Over
       setGameOver(true);
     } else {
       const newScore = score + 1;
@@ -42,24 +40,21 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
       setScore(newScore);
 
       if (newScore > bestScore) setBestScore(newScore);
-
-      // Win condition: clicked all Pokémon
-      if (newScore === pokemon.length) {
-        setGameWon(true);
-      }
+      if (newScore === pokemon.length) setGameWon(true);
     }
-
-    // Shuffle cards
     setPokemon([...pokemon].sort(() => Math.random() - 0.5));
   }
 
   return (
     <div>
-      {/* Difficulty Selector */}
+      {/* Controls */}
       <div className="difficulty-buttons">
         <button onClick={() => fetchPokemon(6)}>Easy</button>
         <button onClick={() => fetchPokemon(12)}>Medium</button>
-        <button onClick={() => fetchPokemon(20)}>Hard</button>
+        <button onClick={() => fetchPokemon(24)}>Hard</button>
+        <button onClick={() => setShinyMode((s) => !s)}>
+          {shinyMode ? "Shiny: ON" : "Shiny: OFF"}
+        </button>
       </div>
 
       {/* Game Grid */}
@@ -70,6 +65,8 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
             id={p.id}
             name={p.name}
             sprite={p.sprites.front_default}
+            shinySprite={p.sprites.front_shiny}
+            shinyMode={shinyMode}
             onClick={handleClick}
           />
         ))}
