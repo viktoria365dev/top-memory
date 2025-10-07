@@ -7,16 +7,23 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
   const [clicked, setClicked] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-  const [shinyMode, setShinyMode] = useState(true); // ✅ add this
+  const [shinyMode, setShinyMode] = useState(true); // ✅ added
 
+  // ✅ fetchPokemon is now inside the component
   async function fetchPokemon(limit = 12) {
-    const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}`);
-    const data = await res.json();
+    const maxGen1 = 151; // Gen 1 Pokémon only
 
+    // Generate unique random IDs between 1 and 151
+    const ids = new Set();
+    while (ids.size < limit) {
+      ids.add(Math.floor(Math.random() * maxGen1) + 1);
+    }
+
+    // Fetch each Pokémon by ID
     const detailed = await Promise.all(
-      data.results.map(async (p) => {
-        const pokeRes = await fetch(p.url);
-        return await pokeRes.json();
+      [...ids].map(async (id) => {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+        return await res.json();
       })
     );
 
@@ -28,7 +35,7 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
   }
 
   useEffect(() => {
-    fetchPokemon(12);
+    fetchPokemon(12); // default difficulty
   }, []);
 
   function handleClick(id) {
