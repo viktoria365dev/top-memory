@@ -9,6 +9,7 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
   const [gameWon, setGameWon] = useState(false);
   const [shinyMode, setShinyMode] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [cryEnabled, setCryEnabled] = useState(true);
 
   // Fetch random Gen 1 Pokémon
   async function fetchPokemon(limit = 12) {
@@ -47,6 +48,22 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
       })
     );
 
+    // ✅ Preload all cries (latest if available)
+    await Promise.all(
+      detailed
+        .map((p) => p.cries?.latest) // grab cry URL
+        .filter(Boolean) // skip if missing
+        .map(
+          (url) =>
+            new Promise((resolve) => {
+              const audio = new Audio();
+              audio.src = url;
+              audio.oncanplaythrough = resolve; // resolves when audio is buffered
+              audio.onerror = resolve; // still resolve if it fails
+            })
+        )
+    );
+
     // Once data + images are ready, update state
     setPokemon(detailed);
     setClicked([]);
@@ -79,11 +96,20 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
     <div>
       {/* Controls */}
       <div className="difficulty-buttons">
-        <button onClick={() => fetchPokemon(6)}>Easy</button>
-        <button onClick={() => fetchPokemon(12)}>Medium</button>
-        <button onClick={() => fetchPokemon(24)}>Hard</button>
+        <button className="difficulty" onClick={() => fetchPokemon(6)}>
+          Easy
+        </button>
+        <button className="difficulty" onClick={() => fetchPokemon(12)}>
+          Medium
+        </button>
+        <button className="difficulty" onClick={() => fetchPokemon(24)}>
+          Hard
+        </button>
         <button onClick={() => setShinyMode((s) => !s)}>
           {shinyMode ? "Shiny: ON" : "Shiny: OFF"}
+        </button>
+        <button onClick={() => setCryEnabled((c) => !c)}>
+          {cryEnabled ? "Cry: ON 🔊" : "Cry: OFF 🔇"}
         </button>
       </div>
 
@@ -100,6 +126,8 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
               sprite={p.sprites.front_default}
               shinySprite={p.sprites.front_shiny}
               shinyMode={shinyMode}
+              cry={p.cries?.latest}
+              cryEnabled={cryEnabled}
               onClick={handleClick}
             />
           ))}

@@ -105,12 +105,22 @@ h1 {
   max-width: 200px;
   padding: 0.5rem 1rem;
   border: none;
-  background: #ffcb05;
-  color: #2a75bb;
   font-weight: bold;
   border-radius: 6px;
   cursor: pointer;
   transition: transform 0.2s;
+}
+
+/* Difficulty buttons (yellow) */
+.difficulty-buttons button.difficulty {
+  background: #ffcb05;
+  color: #2a75bb;
+}
+
+/* Shiny + Cry buttons (blue) */
+.difficulty-buttons button:not(.difficulty) {
+  background: #4a90e2;
+  color: white;
 }
 
 .difficulty-buttons button:hover {
