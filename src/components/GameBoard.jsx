@@ -2,24 +2,36 @@ import { useState, useEffect } from "react";
 import Card from "./Card";
 import Overlay from "./Overlay";
 
+// helper function for Pokémon ranges
+function getPokemonRange(generation) {
+  const ranges = {
+    1: [1, 151], // Gen 1
+    2: [152, 251], // Gen 2
+    3: [252, 386], // Gen 3
+    4: [387, 493], // Gen 4
+  };
+  return ranges[generation] || [1, 151];
+}
+
 function GameBoard({ score, setScore, bestScore, setBestScore }) {
   const [pokemon, setPokemon] = useState([]);
   const [clicked, setClicked] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-  const [shinyMode, setShinyMode] = useState(true);
+  const [shinyMode, setShinyMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cryEnabled, setCryEnabled] = useState(true);
+  const [generation, setGeneration] = useState(1);
 
-  // Fetch random Gen 1 Pokémon
+  // fetch Pokémon based on generation
   async function fetchPokemon(limit = 12) {
-    const maxGen1 = 151;
+    const [start, end] = getPokemonRange(generation);
     setLoading(true);
 
-    // Generate unique random IDs
+    // Generate unique random IDs within the generation range
     const ids = new Set();
     while (ids.size < limit) {
-      ids.add(Math.floor(Math.random() * maxGen1) + 1);
+      ids.add(Math.floor(Math.random() * (end - start + 1)) + start);
     }
 
     // Fetch Pokémon data
@@ -30,7 +42,7 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
       })
     );
 
-    // ✅ Preload all images (normal + shiny if available)
+    // Preload all images
     await Promise.all(
       detailed.flatMap((p) => {
         const urls = [p.sprites.front_default, p.sprites.front_shiny].filter(
@@ -42,29 +54,29 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
               const img = new Image();
               img.src = url;
               img.onload = resolve;
-              img.onerror = resolve; // still resolve if it fails
+              img.onerror = resolve;
             })
         );
       })
     );
 
-    // ✅ Preload all cries (latest if available)
+    // Preload all cries
     await Promise.all(
       detailed
-        .map((p) => p.cries?.latest) // grab cry URL
-        .filter(Boolean) // skip if missing
+        .map((p) => p.cries?.latest)
+        .filter(Boolean)
         .map(
           (url) =>
             new Promise((resolve) => {
               const audio = new Audio();
               audio.src = url;
-              audio.oncanplaythrough = resolve; // resolves when audio is buffered
-              audio.onerror = resolve; // still resolve if it fails
+              audio.oncanplaythrough = resolve;
+              audio.onerror = resolve;
             })
         )
     );
 
-    // Once data + images are ready, update state
+    // Update state
     setPokemon(detailed);
     setClicked([]);
     setGameOver(false);
@@ -76,7 +88,7 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
   // Initial fetch
   useEffect(() => {
     fetchPokemon(12);
-  }, []);
+  }, [generation]); // refetch when generation changes
 
   function handleClick(id) {
     if (clicked.includes(id)) {
@@ -111,6 +123,22 @@ function GameBoard({ score, setScore, bestScore, setBestScore }) {
         <button onClick={() => setCryEnabled((c) => !c)}>
           {cryEnabled ? "Cry: ON 🔊" : "Cry: OFF 🔇"}
         </button>
+
+        {/* Generation dropdown */}
+        <label htmlFor="generation-select" className="visually-hidden">
+          Generation
+        </label>
+
+        <select
+          id="generation-select"
+          value={generation}
+          onChange={(e) => setGeneration(Number(e.target.value))}
+        >
+          <option value={1}>Gen 1</option>
+          <option value={2}>Gen 2</option>
+          <option value={3}>Gen 3</option>
+          <option value={4}>Gen 4</option>
+        </select>
       </div>
 
       {/* Loading indicator */}
